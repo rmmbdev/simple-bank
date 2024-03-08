@@ -121,5 +121,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ACCOUNT = {
     "AMOUNT_MAX_DIGITS": env.int("AMOUNT_MAX_DIGITS", 30),
     "AMOUNT_DECIMAL_PLACES": env.int("AMOUNT_DECIMAL_PLACES", 1),
-
+    "INITIAL_AMOUNT": env.int("INITIAL_AMOUNT", 20_000_000),
 }
