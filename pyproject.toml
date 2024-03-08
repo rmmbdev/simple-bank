@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "simple-bank"
+version = "0.1.0"
+description = ""
+authors = ["Reza Mohammadi <rmm.dev.backend@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+django = "^5.0.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
