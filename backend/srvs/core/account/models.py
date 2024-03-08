@@ -11,14 +11,12 @@ from decimal import (
 from uuid import (
     uuid4,
 )
-from django.db import (
-    IntegrityError,
-    connection,
-    transaction as db_transaction,
-)
 
 from django.contrib.auth.models import (
     AbstractUser,
+)
+from django.db import (
+    transaction as db_transaction,
 )
 from django.db.models import (
     CharField,
