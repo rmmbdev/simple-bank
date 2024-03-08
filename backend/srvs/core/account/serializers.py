@@ -7,6 +7,7 @@ from backend.srvs.core.account.models import (
     User,
     Account,
 )
+from backend.srvs.core.account.settings import AMOUNT_MAX_DIGITS, AMOUNT_DECIMAL_PLACES
 
 from rest_framework.fields import (
     BooleanField,
@@ -26,16 +27,26 @@ from rest_framework.fields import (
 
 class AccountSerializer(ModelSerializer):
     owner = HiddenField(default=CurrentUserDefault())
+    balance = DecimalField(
+        max_digits=AMOUNT_MAX_DIGITS,
+        decimal_places=AMOUNT_DECIMAL_PLACES,
+        read_only=True,
+    )
 
     class Meta:
         model = Account
         fields = [
             "id",
-            "owner"
+            "owner",
+            "balance",
         ]
         read_only_fields = [
-            "id"
+            "id",
         ]
+
+
+class AccountIncreaseBalance(Serializer):
+    amount = DecimalField(max_digits=AMOUNT_MAX_DIGITS, decimal_places=AMOUNT_DECIMAL_PLACES)
 
 
 class UserSerializer(ModelSerializer):
