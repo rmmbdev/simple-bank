@@ -5,6 +5,9 @@ from __future__ import (
 from datetime import (
     datetime,
 )
+from decimal import (
+    Decimal,
+)
 from uuid import (
     uuid4,
 )
@@ -15,13 +18,19 @@ from django.contrib.auth.models import (
 from django.db.models import (
     CharField,
     DateTimeField,
-    EmailField,
     Model,
-    TextChoices,
+    ForeignKey,
     UUIDField,
+    RESTRICT,
+    DecimalField,
 )
 from django.utils import (
     timezone,
+)
+
+from backend.srvs.core.account.settings import (
+    AMOUNT_DECIMAL_PLACES,
+    AMOUNT_MAX_DIGITS,
 )
 
 
@@ -57,4 +66,32 @@ class User(AbstractUser):
         unique=True,
         null=False,
         blank=False,
+    )
+
+
+class Account(BaseAbstractModel):
+    owner: ForeignKey[User] = ForeignKey(
+        to=User,
+        on_delete=RESTRICT,
+        related_name="accounts",
+        db_index=True,
+    )
+
+
+class Transaction(BaseAbstractModel):
+    source: ForeignKey[Account] = ForeignKey(
+        to=Account,
+        on_delete=RESTRICT,
+        related_name="out_transaction",
+        db_index=True,
+    )
+    destination: ForeignKey[Account] = ForeignKey(
+        to=Account,
+        on_delete=RESTRICT,
+        related_name="in_transaction",
+        db_index=True,
+    )
+    amount: DecimalField[Decimal] = DecimalField(
+        max_digits=AMOUNT_MAX_DIGITS,
+        decimal_places=AMOUNT_DECIMAL_PLACES,
     )
