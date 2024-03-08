@@ -34,11 +34,9 @@ class TransactionSerializer(ModelSerializer):
             "source",
             "destination",
             "amount",
-            "status",
             "type",
         ]
         read_only_fields = [
-            "status",
             "type",
         ]
 

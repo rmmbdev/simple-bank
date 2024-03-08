@@ -39,6 +39,8 @@ from backend.srvs.core.account.serializers import (
     TransactionSerializer,
 )
 
+from django.db.models import Q
+
 
 class ProfileViewSet(
     ListModelMixin,
@@ -84,7 +86,7 @@ class AccountViewSet(
         account.increase_balance(validated_data["amount"])
 
         return Response(
-            status=HTTP_204_NO_CONTENT,
+            status=HTTP_201_CREATED,
         )
 
 
@@ -97,3 +99,24 @@ class TransactionViewSet(
     queryset = Transaction.objects.all()
     permission_classes = [IsAuthenticated]
     serializer_class = TransactionSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return self.queryset.filter(
+            Q(source__owner=user) | Q(destination__owner=user)
+        )
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+
+        transaction = Transaction(
+            source=validated_data["source"],
+            destination=validated_data["destination"],
+            amount=validated_data["amount"],
+            type=Transaction.Type.TRANSFER,
+        )
+        transaction.save()
+
+        return Response(data=self.get_serializer(transaction).data, status=HTTP_201_CREATED)

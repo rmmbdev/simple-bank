@@ -35,7 +35,10 @@ from django.utils import (
     timezone,
 )
 
-from backend.srvs.core.account.exceptions import DailyIncrementLimitException
+from backend.srvs.core.account.exceptions import (
+    DailyIncrementLimitException,
+    SourceDestinationEqualException,
+)
 from backend.srvs.core.account.settings import (
     AMOUNT_DECIMAL_PLACES,
     AMOUNT_MAX_DIGITS,
@@ -128,7 +131,6 @@ class Account(BaseAbstractModel):
                     source=banker_account,
                     destination=self,
                     amount=INITIAL_AMOUNT,
-                    status=Transaction.Status.COMPLETED,
                     type=Transaction.Type.INCREMENT,
                 )
                 transaction.save()
@@ -164,17 +166,12 @@ class Account(BaseAbstractModel):
             source=banker_account,
             destination=self,
             amount=amount,
-            status=Transaction.Status.COMPLETED,
             type=Transaction.Type.INCREMENT,
         )
         transaction.save()
 
 
 class Transaction(BaseAbstractModel):
-    class Status(TextChoices):
-        PENDING: str = "PENDING"
-        COMPLETED: str = "COMPLETED"
-
     class Type(TextChoices):
         INCREMENT: str = "INCREMENT"
         TRANSFER: str = "TRANSFER"
@@ -195,12 +192,6 @@ class Transaction(BaseAbstractModel):
         max_digits=AMOUNT_MAX_DIGITS,
         decimal_places=AMOUNT_DECIMAL_PLACES,
     )
-    status: CharField[str] = CharField(
-        max_length=25,
-        choices=Status.choices,
-        default=Status.PENDING,
-        db_index=True,
-    )
     type: CharField[str] = CharField(
         max_length=25,
         choices=Type.choices,
@@ -208,5 +199,8 @@ class Transaction(BaseAbstractModel):
         db_index=True,
     )
 
-    # def save(self, *args, **kwargs):
-    #     adding = self._state.adding
+    def save(self, *args, **kwargs):
+        if self.source == self.destination:
+            raise SourceDestinationEqualException
+
+        super().save(*args, **kwargs)
