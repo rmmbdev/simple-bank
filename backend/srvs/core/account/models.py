@@ -4,6 +4,7 @@ from __future__ import (
 
 from datetime import (
     datetime,
+    timedelta,
 )
 from decimal import (
     Decimal,
@@ -34,10 +35,12 @@ from django.utils import (
     timezone,
 )
 
+from backend.srvs.core.account.exceptions import DailyIncrementLimitException
 from backend.srvs.core.account.settings import (
     AMOUNT_DECIMAL_PLACES,
     AMOUNT_MAX_DIGITS,
     INITIAL_AMOUNT,
+    DAILY_INCREMENT_LIMIT,
 )
 
 
@@ -89,6 +92,14 @@ class Account(BaseAbstractModel):
     )
 
     @property
+    def in_transactions(self) -> QuerySet:
+        raise NotImplementedError
+
+    @property
+    def out_transactions(self) -> QuerySet:
+        raise NotImplementedError
+
+    @property
     def balance(self):
         in_value = self.in_transactions.aggregate(sum_value=Sum('amount'))
         if (in_value is not None) and ("sum_value" in in_value) and (in_value["sum_value"] is not None):
@@ -123,14 +134,40 @@ class Account(BaseAbstractModel):
                 transaction.save()
 
     def increase_balance(self, amount):
+        now = timezone.now()
+        today_start = datetime(now.year, now.month, now.day)
+        today_end = today_start + timedelta(days=1)
+
+        # check for daily increment limit
+        today_incomes = self.in_transactions.filter(
+            created_at__gte=today_start,
+            created_at__lt=today_end,
+            type=Transaction.Type.INCREMENT,
+        )
+        today_incomes_value = today_incomes.aggregate(sum_value=Sum('amount'))
+        if (
+            (today_incomes_value is not None) and
+            ("sum_value" in today_incomes_value) and
+            (today_incomes_value["sum_value"] is not None)
+        ):
+            today_incomes_value = today_incomes_value["sum_value"]
+        else:
+            today_incomes_value = 0
+
+        today_incomes_value += amount
+
+        if today_incomes_value > DAILY_INCREMENT_LIMIT:
+            raise DailyIncrementLimitException
+
         banker_account = Account.objects.filter(owner__username="banker").first()
-        Transaction.objects.create(
+        transaction = Transaction(
             source=banker_account,
             destination=self,
             amount=amount,
             status=Transaction.Status.COMPLETED,
             type=Transaction.Type.INCREMENT,
         )
+        transaction.save()
 
 
 class Transaction(BaseAbstractModel):
