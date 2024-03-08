@@ -20,7 +20,10 @@ from rest_framework.permissions import (
     IsAuthenticated,
 )
 
-from backend.srvs.core.account.serializers import UserSerializer
+from backend.srvs.core.account.serializers import (
+    UserSerializer,
+    AccountSerializer,
+)
 
 
 class ProfileViewSet(
@@ -35,3 +38,18 @@ class ProfileViewSet(
     def get_queryset(self):
         user = self.request.user
         return self.queryset.filter(id=user.id)
+
+
+class AccountViewSet(
+    CreateModelMixin,
+    ListModelMixin,
+    RetrieveModelMixin,
+    GenericViewSet,
+):
+    queryset = Account.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = AccountSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return self.queryset.filter(owner=user)

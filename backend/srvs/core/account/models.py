@@ -92,7 +92,7 @@ class Account(BaseAbstractModel):
             with db_transaction.atomic():
                 super().save(*args, **kwargs)
 
-                banker_account = Account.objects.first(owner__username="banker")
+                banker_account = Account.objects.filter(owner__username="banker").first()
                 Transaction.objects.create(
                     source=banker_account,
                     destination=self,

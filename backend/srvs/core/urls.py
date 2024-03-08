@@ -13,6 +13,7 @@ from rest_framework_simplejwt.views import (
 
 from backend.srvs.core.account.views import (
     ProfileViewSet,
+    AccountViewSet,
 )
 
 urlpatterns = [
@@ -25,6 +26,7 @@ urlpatterns = [
 
 router = DefaultRouter()
 router.register(r"profile", ProfileViewSet, "profile")
+router.register(r"accounts", AccountViewSet, "account")
 
 urlpatterns += [
     path("api/", include(router.urls)),

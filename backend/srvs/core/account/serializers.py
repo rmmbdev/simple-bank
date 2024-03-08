@@ -8,12 +8,30 @@ from backend.srvs.core.account.models import (
     Account,
 )
 
+from rest_framework.fields import (
+    BooleanField,
+    CharField,
+    DateTimeField,
+    DecimalField,
+    EmailField,
+    HiddenField,
+    IntegerField,
+    RegexField,
+    SerializerMethodField,
+    SlugField,
+    URLField,
+    UUIDField,
+)
+
 
 class AccountSerializer(ModelSerializer):
+    owner = HiddenField(default=CurrentUserDefault())
+
     class Meta:
         model = Account
         fields = [
             "id",
+            "owner"
         ]
         read_only_fields = [
             "id"
