@@ -27,7 +27,9 @@ class UserSerializer(ModelSerializer):
         model = User
         fields = [
             "username",
+            "accounts",
         ]
         read_only_fields = [
-            "username"
+            "username",
+            "accounts",
         ]
