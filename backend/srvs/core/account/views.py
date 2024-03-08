@@ -35,7 +35,8 @@ from rest_framework.permissions import (
 from backend.srvs.core.account.serializers import (
     UserSerializer,
     AccountSerializer,
-    AccountIncreaseBalance,
+    AccountIncreaseBalanceSerializer,
+    TransactionSerializer,
 )
 
 
@@ -72,11 +73,11 @@ class AccountViewSet(
         detail=True,
         permission_classes=[IsAuthenticated],
         url_path="increase-balance",
-        serializer_class=AccountIncreaseBalance,
+        serializer_class=AccountIncreaseBalanceSerializer,
     )
     def increase_balance(self, request, pk=None, ):
         account: Account = get_object_or_404(self.get_queryset(), pk=pk)
-        serializer = AccountIncreaseBalance(data=request.data)
+        serializer = AccountIncreaseBalanceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
 
@@ -85,3 +86,14 @@ class AccountViewSet(
         return Response(
             status=HTTP_204_NO_CONTENT,
         )
+
+
+class TransactionViewSet(
+    CreateModelMixin,
+    ListModelMixin,
+    RetrieveModelMixin,
+    GenericViewSet,
+):
+    queryset = Transaction.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = TransactionSerializer
