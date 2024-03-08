@@ -72,6 +72,10 @@ class User(AbstractUser):
         blank=False,
     )
 
+    @property
+    def accounts(self):
+        raise NotImplementedError
+
 
 class Account(BaseAbstractModel):
     owner: ForeignKey[User] = ForeignKey(
