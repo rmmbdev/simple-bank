@@ -11,6 +11,11 @@ from decimal import (
 from uuid import (
     uuid4,
 )
+from django.db import (
+    IntegrityError,
+    connection,
+    transaction as db_transaction,
+)
 
 from django.contrib.auth.models import (
     AbstractUser,
@@ -31,6 +36,7 @@ from django.utils import (
 from backend.srvs.core.account.settings import (
     AMOUNT_DECIMAL_PLACES,
     AMOUNT_MAX_DIGITS,
+    INITIAL_AMOUNT,
 )
 
 
@@ -76,6 +82,20 @@ class Account(BaseAbstractModel):
         related_name="accounts",
         db_index=True,
     )
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        if adding:
+            with db_transaction.atomic():
+                super().save(*args, **kwargs)
+
+                banker_account = Account.objects.first(owner__username="banker")
+                Transaction.objects.create(
+                    source=banker_account,
+                    destination=self,
+                    amount=INITIAL_AMOUNT,
+                )
 
 
 class Transaction(BaseAbstractModel):
