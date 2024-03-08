@@ -10,6 +10,7 @@ python = "^3.11"
 django = "^5.0.3"
 djangorestframework = "^3.14.0"
 djangorestframework-simplejwt = "^5.3.1"
+environs = "^11.0.0"
 
 
 [build-system]
