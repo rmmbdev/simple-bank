@@ -6,6 +6,7 @@ from rest_framework.serializers import (
 from backend.srvs.core.account.models import (
     User,
     Account,
+    Transaction,
 )
 from backend.srvs.core.account.settings import AMOUNT_MAX_DIGITS, AMOUNT_DECIMAL_PLACES
 
@@ -23,6 +24,23 @@ from rest_framework.fields import (
     URLField,
     UUIDField,
 )
+
+
+class TransactionSerializer(ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = [
+            "created_at",
+            "source",
+            "destination",
+            "amount",
+            "status",
+            "type",
+        ]
+        read_only_fields = [
+            "status",
+            "type",
+        ]
 
 
 class AccountSerializer(ModelSerializer):
@@ -45,7 +63,7 @@ class AccountSerializer(ModelSerializer):
         ]
 
 
-class AccountIncreaseBalance(Serializer):
+class AccountIncreaseBalanceSerializer(Serializer):
     amount = DecimalField(max_digits=AMOUNT_MAX_DIGITS, decimal_places=AMOUNT_DECIMAL_PLACES)
 
 
