@@ -8,7 +8,7 @@ class Core:
     def validate_token(self, token):
         url = self.base_url + "/api/token/verify/"
         payload = {
-            "token": token,
+            "token": token.split(' ')[1],
         }
         response = requests.post(url=url, data=payload)
         if response.ok:

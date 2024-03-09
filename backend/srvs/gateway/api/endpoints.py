@@ -9,6 +9,13 @@ from backend.srvs.gateway.api.models import (
     IncrementQueryValidator,
     HeaderValidator,
 )
+from backend.adapters.core import Core
+from backend.srvs.gateway.settings import CORE_BASE_URL
+from starlette.exceptions import HTTPException
+
+core_adapter = Core(
+    base_url=CORE_BASE_URL,
+)
 
 
 async def get_ping(request):
@@ -21,8 +28,12 @@ async def post_increment(request: Request):
     body = await request.json()
     body_validated = IncrementBodyValidator(**body)
 
-    header_validated = HeaderValidator(**dict(request.headers))
+    headers = dict(request.headers)
+    headers_lower_key = {k.lower(): v for k, v in headers.items()}
+    header_validated = HeaderValidator(**headers_lower_key)
 
+    if not core_adapter.validate_token(header_validated.authorization):
+        raise HTTPException(status_code=401, detail="Not authorized, invalid token!")
     data = {
         "msg": "done"
     }

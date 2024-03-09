@@ -10,7 +10,7 @@ class PydanticValidator(BaseModel, extra=Extra.forbid):
 
 
 class HeaderValidator(BaseModel):
-    Authorization: str
+    authorization: str
 
 
 class IncrementQueryValidator(PydanticValidator):
