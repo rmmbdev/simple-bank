@@ -14,3 +14,14 @@ class Core:
         if response.ok:
             return True
         return False
+
+    def increase(self, account_id, amount, token):
+        url = self.base_url + f"/api/accounts/{account_id}/increase-balance/"
+        payload = {
+            "amount": amount,
+        }
+        headers = {
+            "authorization": token,
+        }
+        response = requests.post(url=url, data=payload, headers=headers)
+        return response
