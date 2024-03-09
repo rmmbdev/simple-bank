@@ -3,7 +3,7 @@ from starlette.responses import (
     PlainTextResponse,
 )
 from starlette.requests import Request
-
+from uuid import uuid4
 from backend.srvs.gateway.api.models import (
     IncrementBodyValidator,
     IncrementQueryValidator,
@@ -15,10 +15,11 @@ from backend.srvs.gateway.settings import (
     RABBIT_URL,
     INCREMENT_QUEUE,
     TRANSFER_QUEUE,
-
+    REDIS_URL,
 )
 from starlette.exceptions import HTTPException
 from backend.libs.rabbit import RabbitAdapter
+from backend.libs.redis import RedisAdapter
 
 core_adapter = Core(
     base_url=CORE_BASE_URL,
@@ -34,25 +35,55 @@ transfer_rabbit = RabbitAdapter(
     queue=TRANSFER_QUEUE,
 )
 
+db = RedisAdapter(
+    url=REDIS_URL,
+)
+
+
+def check_token(request):
+    headers = dict(request.headers)
+    headers_lower_key = {k.lower(): v for k, v in headers.items()}
+    header_validated: HeaderValidator = HeaderValidator(**headers_lower_key)
+    if not core_adapter.validate_token(header_validated.authorization):
+        raise HTTPException(status_code=401, detail="Not authorized, invalid token!")
+    return header_validated.authorization
+
+
+def register_request():
+    request_id = str(uuid4())
+    db.set(
+        name=request_id,
+        value="PENDING"
+    )
+    return request_id
+
 
 async def get_ping(request):
     return PlainTextResponse("Pong")
 
 
 async def post_increment(request: Request):
-    headers = dict(request.headers)
-    headers_lower_key = {k.lower(): v for k, v in headers.items()}
-    header_validated = HeaderValidator(**headers_lower_key)
-    if not core_adapter.validate_token(header_validated.authorization):
-        raise HTTPException(status_code=401, detail="Not authorized, invalid token!")
+    token = check_token(request)
 
-    path_params_validated = IncrementQueryValidator(**dict(request.path_params))
+    path_params_validated: IncrementQueryValidator = IncrementQueryValidator(**dict(request.path_params))
 
     body = await request.json()
-    body_validated = IncrementBodyValidator(**body)
+    body_validated: IncrementBodyValidator = IncrementBodyValidator(**body)
+    account_id = str(path_params_validated.account_id)
 
-    data = {
-        "msg": "done"
-    }
+    request_id = register_request()
 
-    return JSONResponse(data)
+    increment_rabbit.publish(
+        {
+            "request_id": request_id,
+            "account_id": account_id,
+            "amount": body_validated.amount,
+            "token": token,
+        }
+    )
+
+    return JSONResponse(
+        {
+            "request_id": request_id,
+        }
+    )
