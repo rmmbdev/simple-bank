@@ -9,13 +9,16 @@ from backend.srvs.gateway.api.models import (
     IncrementBodyValidator,
     IncrementQueryValidator,
     HeaderValidator,
+    TransferBodyValidator,
 )
 from backend.adapters.core import Core
 from backend.srvs.gateway.settings import (
     CORE_BASE_URL,
     RABBIT_URL,
     INCREMENT_QUEUE,
-    TRANSFER_QUEUE,
+    TRANSFER_SMALL_QUEUE,
+    TRANSFER_LARGE_QUEUE,
+    SMALL_AMOUNT_MAX,
     REDIS_URL,
 )
 from starlette.exceptions import HTTPException
@@ -31,9 +34,14 @@ increment_rabbit = RabbitAdapter(
     queue=INCREMENT_QUEUE,
 )
 
-transfer_rabbit = RabbitAdapter(
+transfer_small_rabbit = RabbitAdapter(
     url=RABBIT_URL,
-    queue=TRANSFER_QUEUE,
+    queue=TRANSFER_SMALL_QUEUE,
+)
+
+transfer_large_rabbit = RabbitAdapter(
+    url=RABBIT_URL,
+    queue=TRANSFER_LARGE_QUEUE,
 )
 
 db = RedisAdapter(
@@ -84,10 +92,10 @@ async def post_increment(request: Request):
     token = check_token(request)
 
     path_params_validated: IncrementQueryValidator = IncrementQueryValidator(**dict(request.path_params))
+    account_id = str(path_params_validated.account_id)
 
     body = await request.json()
     body_validated: IncrementBodyValidator = IncrementBodyValidator(**body)
-    account_id = str(path_params_validated.account_id)
 
     request_id = register_request()
 
@@ -99,6 +107,45 @@ async def post_increment(request: Request):
             "token": token,
         }
     )
+
+    return JSONResponse(
+        {
+            "request_id": request_id,
+        }
+    )
+
+
+async def post_transfer(request: Request):
+    token = check_token(request)
+
+    body = await request.json()
+    body_validated: TransferBodyValidator = TransferBodyValidator(**body)
+    source = str(body_validated.source)
+    destination = str(body_validated.destination)
+    amount = body_validated.amount
+
+    request_id = register_request()
+
+    if amount < SMALL_AMOUNT_MAX:
+        transfer_small_rabbit.publish(
+            {
+                "request_id": request_id,
+                "source": source,
+                "destination": destination,
+                "amount": amount,
+                "token": token,
+            }
+        )
+    else:
+        transfer_large_rabbit.publish(
+            {
+                "request_id": request_id,
+                "source": source,
+                "destination": destination,
+                "amount": amount,
+                "token": token,
+            }
+        )
 
     return JSONResponse(
         {
