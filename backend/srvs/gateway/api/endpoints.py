@@ -10,11 +10,28 @@ from backend.srvs.gateway.api.models import (
     HeaderValidator,
 )
 from backend.adapters.core import Core
-from backend.srvs.gateway.settings import CORE_BASE_URL
+from backend.srvs.gateway.settings import (
+    CORE_BASE_URL,
+    RABBIT_URL,
+    INCREMENT_QUEUE,
+    TRANSFER_QUEUE,
+
+)
 from starlette.exceptions import HTTPException
+from backend.libs.rabbit import RabbitAdapter
 
 core_adapter = Core(
     base_url=CORE_BASE_URL,
+)
+
+increment_rabbit = RabbitAdapter(
+    url=RABBIT_URL,
+    queue=INCREMENT_QUEUE,
+)
+
+transfer_rabbit = RabbitAdapter(
+    url=RABBIT_URL,
+    queue=TRANSFER_QUEUE,
 )
 
 
