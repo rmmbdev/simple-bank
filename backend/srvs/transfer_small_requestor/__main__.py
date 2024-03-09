@@ -1,7 +1,7 @@
 from backend.adapters.core import Core
 from backend.libs.rabbit import RabbitAdapter
 from backend.libs.redis import RedisAdapter
-from backend.srvs.increase_requetor.settings import (
+from backend.srvs.transfer_small_requestor.settings import (
     RABBIT_URL,
     QUEUE,
     REDIS_URL,
