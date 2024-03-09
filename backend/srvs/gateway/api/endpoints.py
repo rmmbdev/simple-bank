@@ -5,6 +5,7 @@ from starlette.responses import (
 from starlette.requests import Request
 from uuid import uuid4
 from backend.srvs.gateway.api.models import (
+    GetRequestQueryValidator,
     IncrementBodyValidator,
     IncrementQueryValidator,
     HeaderValidator,
@@ -60,6 +61,23 @@ def register_request():
 
 async def get_ping(request):
     return PlainTextResponse("Pong")
+
+
+async def get_request(request):
+    _ = check_token(request)
+    path_params_validated: GetRequestQueryValidator = GetRequestQueryValidator(**dict(request.path_params))
+    request_id = str(path_params_validated.request_id)
+
+    status = db.get(request_id)
+    if status is None:
+        raise HTTPException(status_code=404, detail="Request not found!")
+
+    return JSONResponse(
+        {
+            "request_id": request_id,
+            "status": status,
+        }
+    )
 
 
 async def post_increment(request: Request):

@@ -19,3 +19,7 @@ class IncrementQueryValidator(PydanticValidator):
 
 class IncrementBodyValidator(PydanticValidator):
     amount: float
+
+
+class GetRequestQueryValidator(PydanticValidator):
+    request_id: UUID4
