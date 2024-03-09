@@ -38,6 +38,7 @@ from django.utils import (
 from backend.srvs.core.account.exceptions import (
     DailyIncrementLimitException,
     SourceDestinationEqualException,
+    InsufficientBalanceException,
 )
 from backend.srvs.core.account.settings import (
     AMOUNT_DECIMAL_PLACES,
@@ -202,5 +203,8 @@ class Transaction(BaseAbstractModel):
     def save(self, *args, **kwargs):
         if self.source == self.destination:
             raise SourceDestinationEqualException
+
+        if (self.type == self.Type.TRANSFER) and (self.source.balance - self.amount < 0):
+            raise InsufficientBalanceException
 
         super().save(*args, **kwargs)
