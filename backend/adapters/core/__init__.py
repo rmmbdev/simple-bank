@@ -25,3 +25,16 @@ class Core:
         }
         response = requests.post(url=url, data=payload, headers=headers)
         return response
+
+    def transfer(self, source, destination, amount, token):
+        url = self.base_url + "/api/transactions/"
+        payload = {
+            "source": source,
+            "destination": destination,
+            "amount": amount,
+        }
+        headers = {
+            "authorization": token,
+        }
+        response = requests.post(url=url, data=payload, headers=headers)
+        return response

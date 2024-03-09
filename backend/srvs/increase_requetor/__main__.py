@@ -30,9 +30,9 @@ def callback(request):
 
     response = core_adapter.increase(account_id, amount, token)
     if response.ok:
-        db.set(request_id, "COMPLETED")
+        db.set_ttl(request_id, "COMPLETED")
     else:
-        db.set(request_id, {"status": "FAILED", "message": response.text})
+        db.set_ttl(request_id, {"status": "FAILED", "message": response.text})
 
 
 def main():

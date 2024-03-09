@@ -4,6 +4,7 @@ import redis as _redis
 from typing_extensions import (
     Self,
 )
+from datetime import timedelta
 
 
 class RedisAdapter:
@@ -24,6 +25,12 @@ class RedisAdapter:
     def set(self: Self, name: str, value: dict) -> bool:
         _value = json.dumps(value)
         if self.client.set(name, _value):
+            return True
+        return False
+
+    def set_ttl(self: Self, name: str, value: dict) -> bool:
+        _value = json.dumps(value)
+        if self.client.set(name, _value, ex=timedelta(hours=2)):
             return True
         return False
 
