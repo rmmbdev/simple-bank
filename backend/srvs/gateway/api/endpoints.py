@@ -24,6 +24,7 @@ from backend.srvs.gateway.settings import (
 from starlette.exceptions import HTTPException
 from backend.libs.rabbit import RabbitAdapter
 from backend.libs.redis import RedisAdapter
+from datetime import datetime
 
 core_adapter = Core(
     base_url=CORE_BASE_URL,
@@ -47,6 +48,7 @@ transfer_large_rabbit = RabbitAdapter(
 db = RedisAdapter(
     url=REDIS_URL,
 )
+DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 
 def check_token(request):
@@ -144,6 +146,7 @@ async def post_transfer(request: Request):
                 "destination": destination,
                 "amount": amount,
                 "token": token,
+                "request_date": datetime.now().strftime(DATETIME_FORMAT)
             }
         )
 
