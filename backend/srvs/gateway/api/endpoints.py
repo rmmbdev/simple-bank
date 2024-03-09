@@ -40,17 +40,17 @@ async def get_ping(request):
 
 
 async def post_increment(request: Request):
+    headers = dict(request.headers)
+    headers_lower_key = {k.lower(): v for k, v in headers.items()}
+    header_validated = HeaderValidator(**headers_lower_key)
+    if not core_adapter.validate_token(header_validated.authorization):
+        raise HTTPException(status_code=401, detail="Not authorized, invalid token!")
+
     path_params_validated = IncrementQueryValidator(**dict(request.path_params))
 
     body = await request.json()
     body_validated = IncrementBodyValidator(**body)
 
-    headers = dict(request.headers)
-    headers_lower_key = {k.lower(): v for k, v in headers.items()}
-    header_validated = HeaderValidator(**headers_lower_key)
-
-    if not core_adapter.validate_token(header_validated.authorization):
-        raise HTTPException(status_code=401, detail="Not authorized, invalid token!")
     data = {
         "msg": "done"
     }
