@@ -16,7 +16,11 @@ from backend.srvs.core.account.views import (
     ProfileViewSet,
     AccountViewSet,
     TransactionViewSet,
+    PrivateAccountViewSet,
+    PrivateTransactionViewSet,
 )
+
+from backend.srvs.core.settings import CORE_TYPE
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,10 +31,17 @@ urlpatterns = [
 
 ]
 
-router = DefaultRouter()
-router.register(r"profile", ProfileViewSet, "profile")
-router.register(r"accounts", AccountViewSet, "account")
-router.register(r"transactions", TransactionViewSet, "transaction")
+if CORE_TYPE == "public":
+    router = DefaultRouter()
+    router.register(r"profile", ProfileViewSet, "profile")
+    router.register(r"accounts", AccountViewSet, "account")
+    router.register(r"transactions", TransactionViewSet, "transaction")
+elif CORE_TYPE == "private":
+    router = DefaultRouter()
+    router.register(r"accounts", PrivateAccountViewSet, "private_account")
+    router.register(r"transactions", PrivateTransactionViewSet, "private_transaction")
+else:
+    raise Exception("Invalid CORE_TYPE")
 
 urlpatterns += [
     path("api/", include(router.urls)),

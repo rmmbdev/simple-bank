@@ -50,13 +50,32 @@ services:
       - INITIAL_AMOUNT=20000000
       - DAILY_INCREMENT_LIMIT=100000000
       - DJANGO_SETTINGS_MODULE=backend.srvs.core.settings
+      - CORE_TYPE=public
+    depends_on:
+      - postgres
+    command: [ "bash", "-c", "python backend/srvs/core/manage.py migrate && python backend/srvs/core/manage.py runserver 0.0.0.0:80" ]
+  core-private:
+    <<: *srvs
+    ports:
+      - "8001:80"
+    environment:
+      - DATABASES_NAME=appcore
+      - DATABASES_USER=postgres
+      - DATABASES_PASSWORD=postgres
+      - DATABASES_HOST=postgres
+      - AMOUNT_MAX_DIGITS=20
+      - AMOUNT_DECIMAL_PLACES=1
+      - INITIAL_AMOUNT=20000000
+      - DAILY_INCREMENT_LIMIT=100000000
+      - DJANGO_SETTINGS_MODULE=backend.srvs.core.settings
+      - CORE_TYPE=private
     depends_on:
       - postgres
     command: [ "bash", "-c", "python backend/srvs/core/manage.py migrate && python backend/srvs/core/manage.py runserver 0.0.0.0:80" ]
   gateway:
     <<: *srvs
     ports:
-      - "8001:80"
+      - "8002:80"
     environment:
       - CORE_BASE_URL=http://core
       - RABBIT_URL=amqp://guest:guest@rabbit:5672?heartbeat=0
@@ -68,39 +87,43 @@ services:
     depends_on:
       - rabbit
       - redis
+      - core
     command: [ "bash", "-c", "uvicorn backend.srvs.gateway.__main__:app --host 0.0.0.0 --port 80 --reload" ]
   increment_requestor:
     <<: *srvs
     environment:
-      - CORE_BASE_URL=http://core
+      - CORE_BASE_URL=http://core-private
       - RABBIT_URL=amqp://guest:guest@rabbit:5672?heartbeat=0
       - QUEUE=increment
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - rabbit
       - redis
+      - core-private
     command: [ "bash", "-c", "python backend/srvs/increase_requestor/__main__.py" ]
   transfer_small_requestor:
     <<: *srvs
     environment:
-      - CORE_BASE_URL=http://core
+      - CORE_BASE_URL=http://core-private
       - RABBIT_URL=amqp://guest:guest@rabbit:5672?heartbeat=0
       - QUEUE=transfer-small
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - rabbit
       - redis
+      - core-private
     command: [ "bash", "-c", "python backend/srvs/transfer_small_requestor/__main__.py" ]
   transfer_large_requestor:
     <<: *srvs
     environment:
-      - CORE_BASE_URL=http://core
+      - CORE_BASE_URL=http://core-private
       - RABBIT_URL=amqp://guest:guest@rabbit:5672?heartbeat=0
       - QUEUE=transfer-large
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - rabbit
       - redis
+      - core-private
     command: [ "bash", "-c", "python backend/srvs/transfer_large_requestor/__main__.py" ]
 networks:
   simple-bank-overlay:

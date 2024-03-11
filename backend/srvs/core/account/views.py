@@ -70,6 +70,17 @@ class AccountViewSet(
         user = self.request.user
         return self.queryset.filter(owner=user)
 
+
+class PrivateAccountViewSet(
+    CreateModelMixin,
+    ListModelMixin,
+    RetrieveModelMixin,
+    GenericViewSet,
+):
+    queryset = Account.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = AccountSerializer
+
     @action(
         methods=["post"],
         detail=True,
@@ -77,7 +88,7 @@ class AccountViewSet(
         url_path="increase-balance",
         serializer_class=AccountIncreaseBalanceSerializer,
     )
-    def increase_balance(self, request, pk=None, ):
+    def increase_balance(self, request, pk=None):
         account: Account = get_object_or_404(self.get_queryset(), pk=pk)
         serializer = AccountIncreaseBalanceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -91,7 +102,6 @@ class AccountViewSet(
 
 
 class TransactionViewSet(
-    CreateModelMixin,
     ListModelMixin,
     RetrieveModelMixin,
     GenericViewSet,
@@ -113,6 +123,17 @@ class TransactionViewSet(
         return self.queryset.filter(
             Q(source__owner=user) | Q(destination__owner=user)
         )
+
+
+class PrivateTransactionViewSet(
+    CreateModelMixin,
+    ListModelMixin,
+    RetrieveModelMixin,
+    GenericViewSet,
+):
+    queryset = Transaction.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = TransactionSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
