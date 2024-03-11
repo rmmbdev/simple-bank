@@ -1,45 +1,40 @@
-from rest_framework.mixins import (
-    CreateModelMixin,
-    DestroyModelMixin,
-    ListModelMixin,
-    RetrieveModelMixin,
-    UpdateModelMixin,
-)
-from rest_framework.status import (
-    HTTP_201_CREATED,
-    HTTP_204_NO_CONTENT,
+from django.db.models import Q
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import (
+    action,
 )
 from rest_framework.generics import (
     get_object_or_404,
 )
+from rest_framework.mixins import (
+    CreateModelMixin,
+    ListModelMixin,
+    RetrieveModelMixin,
+)
+from rest_framework.permissions import (
+    IsAuthenticated,
+)
 from rest_framework.response import (
     Response,
 )
-from rest_framework.decorators import (
-    action,
+from rest_framework.status import (
+    HTTP_201_CREATED,
 )
 from rest_framework.viewsets import (
     GenericViewSet,
-    ReadOnlyModelViewSet,
 )
+
 from backend.srvs.core.account.models import (
     User,
     Account,
     Transaction,
 )
-from rest_framework.permissions import (
-    BasePermission,
-    IsAuthenticated,
-)
-
 from backend.srvs.core.account.serializers import (
     UserSerializer,
     AccountSerializer,
     AccountIncreaseBalanceSerializer,
     TransactionSerializer,
 )
-
-from django.db.models import Q
 
 
 class ProfileViewSet(
@@ -65,6 +60,11 @@ class AccountViewSet(
     queryset = Account.objects.all()
     permission_classes = [IsAuthenticated]
     serializer_class = AccountSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        "created_at": ["gt", "lt"],
+        "id": ["exact"],
+    }
 
     def get_queryset(self):
         user = self.request.user
@@ -99,6 +99,14 @@ class TransactionViewSet(
     queryset = Transaction.objects.all()
     permission_classes = [IsAuthenticated]
     serializer_class = TransactionSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        "created_at": ["gt", "lt"],
+        "id": ["exact"],
+        "source": ["exact"],
+        "destination": ["exact"],
+        "amount": ["gt", "lt", "exact"],
+    }
 
     def get_queryset(self):
         user = self.request.user
