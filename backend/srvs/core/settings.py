@@ -18,7 +18,7 @@ SECRET_KEY = env.str(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'django_filters',
 
     'backend.srvs.core.account',
 ]
@@ -74,7 +75,7 @@ DATABASES = {
         "NAME": env.str("DATABASES_NAME", default="appcore"),
         "USER": env.str("DATABASES_USER", "postgres"),
         "PASSWORD": env.str("DATABASES_PASSWORD", "postgres"),
-        "HOST": env.str("DATABASES_HOST", default="127.0.0.1"),
+        "HOST": env.str("DATABASES_HOST", default="0.0.0.0"),
         "PORT": env.int("DATABASES_PORT", default=5432),
     },
 }
