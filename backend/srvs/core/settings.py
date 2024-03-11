@@ -69,12 +69,15 @@ WSGI_APPLICATION = 'backend.srvs.core.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": env.str("DATABASES_NAME", default="appcore"),
+        "USER": env.str("DATABASES_USER", "postgres"),
+        "PASSWORD": env.str("DATABASES_PASSWORD", "postgres"),
+        "HOST": env.str("DATABASES_HOST", default="127.0.0.1"),
+        "PORT": env.int("DATABASES_PORT", default=5432),
+    },
 }
-
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
