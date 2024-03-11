@@ -23,13 +23,13 @@ To build and run the Simple Bank project using Docker, please follow these steps
 3. Build the Docker image using the provided Dockerfile:
 
    ```
-   docker build -t simple-bank .
+    docker buildx build --file Dockerfile --tag simple-bank .
    ```
 
 4. Run the application using Docker Compose:
 
    ```
-   docker-compose up
+   docker-compose up -d
    ```
 
    This command will start the application and its dependencies, such as the `PostgreSQL` database, `Redis` database
