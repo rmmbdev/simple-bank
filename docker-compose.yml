@@ -4,13 +4,16 @@ x-common: &common
   restart: always
   networks:
     - simple-bank-overlay
+x-srvs: &srvs
+  <<: *common
+  image: simple-bank:latest
 
 services:
   redis:
     <<: *common
     image: redis:7.0-alpine3.16
     ports:
-      - "127.0.0.1:6379:6379"
+      - "0.0.0.0:6379:6379"
     volumes:
       - /tmp/redis:/data
   rabbit:
@@ -18,7 +21,7 @@ services:
     image: rabbitmq:3.10-management-alpine
     hostname: alpha
     ports:
-      - "127.0.0.1:5672:5672"
+      - "0.0.0.0:5672:5672"
       - "0.0.0.0:15672:15672"
     volumes:
       - /tmp/rabbitmq:/var/lib/rabbitmq
@@ -34,10 +37,9 @@ services:
     volumes:
       - /tmp/postgres:/var/lib/postgresql/data
   core:
-    <<: *common
-    build: .
+    <<: *srvs
     ports:
-      - "8000:8000"
+      - "8000:80"
     environment:
       - DATABASES_NAME=appcore
       - DATABASES_USER=postgres
@@ -50,10 +52,9 @@ services:
       - DJANGO_SETTINGS_MODULE=backend.srvs.core.settings
     depends_on:
       - postgres
-    command: ["bash", "-c", "python backend/srvs/core/manage.py migrate && python backend/srvs/core/manage.py runserver 0.0.0.0:8000"]
+    command: [ "bash", "-c", "python backend/srvs/core/manage.py migrate && python backend/srvs/core/manage.py runserver 0.0.0.0:80" ]
   gateway:
-    <<: *common
-    build: .
+    <<: *srvs
     ports:
       - "8001:80"
     environment:
@@ -67,9 +68,9 @@ services:
     depends_on:
       - rabbit
       - redis
+    command: [ "bash", "-c", "uvicorn backend.srvs.gateway.__main__:app --host 0.0.0.0 --port 80 --reload" ]
   increment_requestor:
-    <<: *common
-    build: .
+    <<: *srvs
     environment:
       - CORE_BASE_URL=http://core
       - RABBIT_URL=amqp://guest:guest@rabbit:5672?heartbeat=0
@@ -78,9 +79,9 @@ services:
     depends_on:
       - rabbit
       - redis
+    command: [ "bash", "-c", "python backend/srvs/increase_requestor/__main__.py" ]
   transfer_small_requestor:
-    <<: *common
-    build: .
+    <<: *srvs
     environment:
       - CORE_BASE_URL=http://core
       - RABBIT_URL=amqp://guest:guest@rabbit:5672?heartbeat=0
@@ -89,9 +90,9 @@ services:
     depends_on:
       - rabbit
       - redis
+    command: [ "bash", "-c", "python backend/srvs/transfer_small_requestor/__main__.py" ]
   transfer_large_requestor:
-    <<: *common
-    build: .
+    <<: *srvs
     environment:
       - CORE_BASE_URL=http://core
       - RABBIT_URL=amqp://guest:guest@rabbit:5672?heartbeat=0
@@ -100,5 +101,6 @@ services:
     depends_on:
       - rabbit
       - redis
+    command: [ "bash", "-c", "python backend/srvs/transfer_large_requestor/__main__.py" ]
 networks:
   simple-bank-overlay:
