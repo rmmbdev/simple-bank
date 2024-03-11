@@ -63,7 +63,6 @@ class AccountViewSet(
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
         "created_at": ["gt", "lt"],
-        "id": ["exact"],
     }
 
     def get_queryset(self):
@@ -112,7 +111,6 @@ class TransactionViewSet(
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
         "created_at": ["gt", "lt"],
-        "id": ["exact"],
         "source": ["exact"],
         "destination": ["exact"],
         "amount": ["gt", "lt", "exact"],
