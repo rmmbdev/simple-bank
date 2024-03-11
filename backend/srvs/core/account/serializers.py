@@ -53,6 +53,7 @@ class AccountSerializer(ModelSerializer):
         model = Account
         fields = [
             "id",
+            "created_at",
             "owner",
             "balance",
         ]
