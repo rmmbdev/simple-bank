@@ -1,0 +1,104 @@
+version: "3.8"
+
+x-common: &common
+  restart: always
+  networks:
+    - simple-bank-overlay
+
+services:
+  redis:
+    <<: *common
+    image: redis:7.0-alpine3.16
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - /tmp/redis:/data
+  rabbit:
+    <<: *common
+    image: rabbitmq:3.10-management-alpine
+    hostname: alpha
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "0.0.0.0:15672:15672"
+    volumes:
+      - /tmp/rabbitmq:/var/lib/rabbitmq
+  postgres:
+    <<: *common
+    image: postgres:15.3-alpine3.18
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=appcore
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - /tmp/postgres:/var/lib/postgresql/data
+  core:
+    <<: *common
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASES_NAME=appcore
+      - DATABASES_USER=postgres
+      - DATABASES_PASSWORD=postgres
+      - DATABASES_HOST=postgres
+      - AMOUNT_MAX_DIGITS=20
+      - AMOUNT_DECIMAL_PLACES=1
+      - INITIAL_AMOUNT=20000000
+      - DAILY_INCREMENT_LIMIT=100000000
+      - DJANGO_SETTINGS_MODULE=backend.srvs.core.settings
+    depends_on:
+      - postgres
+    command: ["bash", "-c", "python backend/srvs/core/manage.py migrate && python backend/srvs/core/manage.py runserver 0.0.0.0:8000"]
+  gateway:
+    <<: *common
+    build: .
+    ports:
+      - "8001:80"
+    environment:
+      - CORE_BASE_URL=http://core
+      - RABBIT_URL=amqp://guest:guest@rabbit:5672?heartbeat=0
+      - INCREMENT_QUEUE=increment
+      - TRANSFER_SMALL_QUEUE=transfer-small
+      - TRANSFER_LARGE_QUEUE=transfer-large
+      - REDIS_URL=redis://redis:6379/0
+      - SMALL_AMOUNT_MAX=10000000
+    depends_on:
+      - rabbit
+      - redis
+  increment_requestor:
+    <<: *common
+    build: .
+    environment:
+      - CORE_BASE_URL=http://core
+      - RABBIT_URL=amqp://guest:guest@rabbit:5672?heartbeat=0
+      - QUEUE=increment
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - rabbit
+      - redis
+  transfer_small_requestor:
+    <<: *common
+    build: .
+    environment:
+      - CORE_BASE_URL=http://core
+      - RABBIT_URL=amqp://guest:guest@rabbit:5672?heartbeat=0
+      - QUEUE=transfer-small
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - rabbit
+      - redis
+  transfer_large_requestor:
+    <<: *common
+    build: .
+    environment:
+      - CORE_BASE_URL=http://core
+      - RABBIT_URL=amqp://guest:guest@rabbit:5672?heartbeat=0
+      - QUEUE=transfer-large
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - rabbit
+      - redis
+networks:
+  simple-bank-overlay:
