@@ -56,8 +56,6 @@ services:
     command: [ "bash", "-c", "python backend/srvs/core/manage.py migrate && python backend/srvs/core/manage.py runserver 0.0.0.0:80" ]
   core-private:
     <<: *srvs
-    ports:
-      - "8001:80"
     environment:
       - DATABASES_NAME=appcore
       - DATABASES_USER=postgres
@@ -75,7 +73,7 @@ services:
   gateway:
     <<: *srvs
     ports:
-      - "8002:80"
+      - "8001:80"
     environment:
       - CORE_BASE_URL=http://core
       - RABBIT_URL=amqp://guest:guest@rabbit:5672?heartbeat=0
