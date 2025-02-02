@@ -74,8 +74,8 @@ You can access various functionalities through these endpoints:
 + `signup`, `login`, `profile`, `list accounts`, `create account`, `list transactions` are directed to `Core`
 + `create increment`, `create transfer` and `track request` are directed to `Gateway` which will be handled through async requests using event driven architecture
 + `Transaction Status` database is a fast in-memory database (Redis) which can handle high transaction rates.
-+ `Database` us a Postgres instance which is able to store datas permanently
-+ We used RabbitMQ for queues in this project which are:
++ `Database` we use a Postgres instance which is able to store data permanently
++ We use RabbitMQ for queues in this project which are:
   1. `increment`: to handle increase requests. (as soon as possible)
   2. `transfer-small`: to handle transfer requests less than 10,000,000 (as soon as possible)
   3. `transfer-large`: to handle transfer requests more than 10,000,000 (every 4 hours from 00:00 to 24:00)
